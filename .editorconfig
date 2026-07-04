@@ -1,0 +1,30 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Makefile
+[{Makefile,makefile,*.mk}]
+indent_style = tab
+
+# Kubernetes Manifests (YAML)
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+# Go Language
+[*.go]
+indent_style = tab
+
+# HTML
+[*.html]
+indent_style = space
+indent_size = 2
+
+# NGINX config
+[*.conf]
+indent_style = space
+indent_size = 4

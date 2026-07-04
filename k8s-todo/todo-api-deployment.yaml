@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-api
+  labels:
+    # Deploymentリソース自体のラベル
+    app: todo-api
+spec:
+  # 常に２つのPodを維持する（可用性のため）
+  replicas: 2
+  selector:
+    matchLabels:
+      # このＳｅｌｅｃｔｏｒと一致するPodをこのDeploymentが管理する
+      app: todo-api
+  template:
+    metadata:
+      labels:
+        # Podにつけるラベル(selectorと一致させる必要がある)
+        app: todo-api
+    spec:
+      containers:
+      - name: todo-api
+        image: todo-api:latest
+        # kindクラスタ内のローカルイメージをつかうため
+        imagePullPolicy: Never
+        ports:
+          # コンテナが公開するポート（情報提供目的：実際の制限はServerが行う）
+          - containerPort: 8080
+        env:
+          - name: DB_HOST
+            # 第４章でServiceを作成後に有効になる設定
+            value: "todo-db"
+          - name: DB_NAME
+            value: "tododb"
+          - name: DB_USER
+            value: "todouser"
+          - name: DB_PASSWORD
+            # 本番環境では Secretを使う
+            value: "todopassword"
+        resources:
+          requests:
+            # スケジューラがNode選択に使う最低保証量
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            # この値を超えるとCPUがスロットリングされる
+            cpu: "500m"
+            #　この値を超えるとOOMキルされる
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            # Podが生きているか定期的に確認するエンドポイント
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15 # コンテナ起動直後は起動に時間がかかるので確認しない
+          periodSeconds: 20
+        readinessProbe: # Podがリクエストを受け入れられる状態か
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
