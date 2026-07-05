@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-frontend
+spec:
+  # 外部からアクセスできる Service タイプ
+  type: NodePort
+  selector:
+    app: todo-frontend
+  ports:
+  - protocol: TCP
+    # Service が受け付けるポート
+    port: 80
+    # 転送先のコンテナポート
+    targetPort: 80
+    # Node が公開するポート (30000-32767の範囲で指定)
+    nodePort: 30080

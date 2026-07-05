@@ -1,4 +1,18 @@
-.PHONY: k8s-cluster-create k8s-cluster-delete image-build k8s-apply-db k8s-apply-api k8s-apply-frontend k8s-cluster-list k8s-use-cluster k8s-delete-all help
+.PHONY: \
+	help \
+	image-build \
+	k8s-apply-all \
+	k8s-apply-api \
+	k8s-apply-api-service \
+	k8s-apply-db \
+	k8s-apply-db-service \
+	k8s-apply-frontend \
+	k8s-apply-frontend-service \
+	k8s-cluster-create \
+	k8s-cluster-delete \
+	k8s-cluster-list \
+	k8s-delete-all \
+	k8s-use-cluster
 
 # ヘルプを表示する
 help:
@@ -21,7 +35,8 @@ k8s-use-cluster:
 
 # Kindを使ってマルチノードのKubernetesクラスターを作成する
 k8s-cluster-create:
-	kind create cluster -n kind-multinode --config ./kind/multinode-config.yaml --image=kindest/node:v1.33.12
+	# kind create cluster -n kind-multinode --config ./kind/multinode-config.yaml --image=kindest/node:v1.33.12
+	kind create cluster -n kind-multinode --config ./kind/multinode-nodeport.yaml --image=kindest/node:v1.33.12
 
 # 作成したKindクラスターを削除する
 k8s-cluster-delete:
@@ -32,15 +47,15 @@ image-build:
 	docker build -t todo-api:latest ./app/api
 	kind load docker-image todo-api:latest --name kind-multinode
 
-# データベース（todo-db）のマニフェストをクラスターに適用する
+# データベース（todo-db） Deployment のマニフェストをクラスターに適用する
 k8s-apply-db:
 	kubectl apply -f ./k8s-todo/todo-db-deployment.yaml
 
-# API（todo-api）のマニフェストをクラスターに適用する
+# API（todo-api） Deployment のマニフェストをクラスターに適用する
 k8s-apply-api:
 	kubectl apply -f ./k8s-todo/todo-api-deployment.yaml
 
-# フロントエンド（todo-frontend）のマニフェストをクラスターに適用する
+# フロントエンド（todo-frontend） Deployment のマニフェストをクラスターに適用する
 k8s-apply-frontend:
 	kubectl apply -f ./k8s-todo/todo-frontend-deployment.yaml
 
@@ -51,6 +66,18 @@ k8s-apply-all:
 	$(MAKE) k8s-apply-api
 	$(MAKE) k8s-apply-frontend
 	echo "Done!!"
+
+# データベース（todo-db） Service のマニフェストをクラスターに適用する
+k8s-apply-db-service:
+	kubectl apply -f ./k8s-todo/todo-db-service.yaml
+
+# API（todo-api） Service のマニフェストをクラスターに適用する
+k8s-apply-api-service:
+	kubectl apply -f ./k8s-todo/todo-api-service.yaml
+
+# Frontend（todo-frontend） Service のマニフェストをクラスターに適用する
+k8s-apply-frontend-service:
+	kubectl apply -f ./k8s-todo/todo-frontend-service.yaml
 
 # 全マニフェストをクラスタから削除する
 k8s-delete-all:

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # この Service の名前(DNS名として使われる)
+  name: todo-db
+spec:
+  selector:
+    # このラベルを持つ Pod が Service の対象となる
+    app: todo-db
+  ports:
+  - protocol: TCP
+    # Service が受け付けるポート
+    port: 5432
+    # 転送先のコンテナポート
+    targetPort: 5432
+
