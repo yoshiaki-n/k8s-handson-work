@@ -65,6 +65,10 @@ k8s-apply-all:
 	$(MAKE) k8s-apply-db
 	$(MAKE) k8s-apply-api
 	$(MAKE) k8s-apply-frontend
+	kubectl apply -f ./k8s-todo/gateway-class.yaml
+	kubectl apply -f ./k8s-todo/todo-gateway.yaml
+	kubectl apply -f ./k8s-todo/metallb-config.yaml
+	kubectl apply -f ./k8s-todo/todo-httproute.yaml
 	echo "Done!!"
 
 # データベース（todo-db） Service のマニフェストをクラスターに適用する
@@ -82,6 +86,10 @@ k8s-apply-frontend-service:
 # 全マニフェストをクラスタから削除する
 k8s-delete-all:
 	echo "delete all manifests"
+	kubectl delete -f ./k8s-todo/todo-httproute.yaml --ignore-not-found
+	kubectl delete -f ./k8s-todo/metallb-config.yaml --ignore-not-found
+	kubectl delete -f ./k8s-todo/todo-gateway.yaml --ignore-not-found
+	kubectl delete -f ./k8s-todo/gateway-class.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/todo-db-deployment.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/todo-api-deployment.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/todo-frontend-deployment.yaml --ignore-not-found

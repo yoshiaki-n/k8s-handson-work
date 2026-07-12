@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: todo-gateway
+  namespace: default
+spec:
+  # 使用するGatewayClassを指定
+  gatewayClassName: eg
+  listeners:
+    - name: http
+      # 外部からのトラフィックを受け付けるポート
+      port: 80
+      # HTTPプロコトルで受け付ける
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          # 同じNamespace(default)のHTTP　Routeだけ接続を許可
+          from: Same

@@ -1,0 +1,29 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: todo-route
+  namespace: default
+spec:
+  parentRefs:
+  # 接続するGatewayを指定
+  - name: todo-gateway
+    namespace: default
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        # /api/で始まるパスにマッチ
+        value: /api/
+    backendRefs:
+    # todo-api Serviceに転送
+    - name: todo-api
+      port: 8080
+  - matches:
+    - path:
+        type: PathPrefix
+        # それ以外のすべてのパスにマッチ（デフォルト）
+        value: /
+    backendRefs:
+    # todo-frontend Serviceに転送
+    - name: todo-frontend
+      port: 80
