@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  # Deployment　の Volumes　でこのPVCを参照する
+  name: todo-db-pvc
+spec:
+  accessModes:
+    # 同時に１つのNodeのみ読み書き可能（DBに適切なモード）
+    - ReadWriteOnce
+  resources:
+    requests:
+      # 1Gibのストレージを要求する
+      storage: 1Gi

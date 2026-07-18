@@ -12,6 +12,7 @@
 	k8s-cluster-delete \
 	k8s-cluster-list \
 	k8s-delete-all \
+	k8s-port-forward-gateway \
 	k8s-use-cluster
 
 # ヘルプを表示する
@@ -62,6 +63,9 @@ k8s-apply-frontend:
 # 全マニフェストをクラスタに適用する
 k8s-apply-all:
 	echo "apply all manifests"
+	kubectl apply -f ./k8s-todo/todo-api-configmap.yaml
+	kubectl apply -f ./k8s-todo/todo-db-secret.yaml
+	kubectl apply -f ./k8s-todo/todo-db-pvc.yaml
 	$(MAKE) k8s-apply-db
 	$(MAKE) k8s-apply-api
 	$(MAKE) k8s-apply-frontend
@@ -93,5 +97,20 @@ k8s-delete-all:
 	kubectl delete -f ./k8s-todo/todo-db-deployment.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/todo-api-deployment.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/todo-frontend-deployment.yaml --ignore-not-found
+	kubectl delete -f ./k8s-todo/todo-api-configmap.yaml --ignore-not-found
+	kubectl delete -f ./k8s-todo/todo-db-secret.yaml --ignore-not-found
+	kubectl delete -f ./k8s-todo/todo-db-pvc.yaml --ignore-not-found
+	# kubectl delete cnofigmap todo-api-config
+	# kubectl delete secret todo-db-secret
+	# kubectl delete pvc todo-db-pvc
 	echo "Done!!"
 
+# GatewayのServiceをポートフォワードする（リソース名が動的生成されるためラベルで検索）
+k8s-port-forward-gateway:
+	@SVC_NAME=$$(kubectl get svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-name=todo-gateway,gateway.envoyproxy.io/owning-gateway-namespace=default -o jsonpath='{.items[0].metadata.name}'); \
+	if [ -z "$$SVC_NAME" ]; then \
+		echo "Gateway service not found."; \
+		exit 1; \
+	fi; \
+	echo "Port-forwarding to $$SVC_NAME..."; \
+	kubectl port-forward svc/$$SVC_NAME -n envoy-gateway-system 8080:80

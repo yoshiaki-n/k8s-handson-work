@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-api-config
+data:
+  # Service名(DNS名)で参照する
+  DB_HOST: "todo-db"
+  DB_PORT: "5432"
+  DB_NAME: "tododb"
+  DB_USER: "todouser"
+  APP_PORT: "8080"
+  # パスワードではないのでConfigMapに入れる
+  LOG_LEVEL: "info"
+

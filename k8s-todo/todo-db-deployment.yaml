@@ -24,10 +24,17 @@ spec:
         - name: POSTGRES_DB
           value: "tododb"
         - name: POSTGRES_USER
-          value: "todouser"
+          valueFrom:
+            # Secretから個別キーを参照する
+            secretKeyRef:
+              name: todo-db-secret
+              key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
-        # あとでSecretに変更する
-          value: "todopassword"
+          valueFrom:
+            # パスワードはSecretから取得する
+            secretKeyRef:
+              name: todo-db-secret
+              key: POSTGRES_PASSWORD
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         resources:
@@ -48,3 +55,13 @@ spec:
             - tododb
           initialDelaySeconds: 10
           periodSeconds: 5
+        volumeMounts:
+        - name: postgres-data
+          # DBデータを永続化する
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          # 後で作成するPVCを参照
+          claimName: todo-db-pvc
+

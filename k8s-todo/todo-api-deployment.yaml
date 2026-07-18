@@ -26,17 +26,28 @@ spec:
         ports:
           # コンテナが公開するポート（情報提供目的：実際の制限はServerが行う）
           - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              # ConfigMapのすべてのキーを一括で環境変数として注入
+              name: todo-api-config
         env:
-          - name: DB_HOST
-            # 第４章でServiceを作成後に有効になる設定
-            value: "todo-db"
-          - name: DB_NAME
-            value: "tododb"
-          - name: DB_USER
-            value: "todouser"
           - name: DB_PASSWORD
-            # 本番環境では Secretを使う
-            value: "todopassword"
+            valueFrom:
+              # パスワードだけはSecretから取得する
+              secretKeyRef:
+                name: todo-db-secret
+                key: POSTGRES_PASSWORD
+        # env:
+        #   - name: DB_HOST
+        #     # 第４章でServiceを作成後に有効になる設定
+        #     value: "todo-db"
+        #   - name: DB_NAME
+        #     value: "tododb"
+        #   - name: DB_USER
+        #     value: "todouser"
+        #   - name: DB_PASSWORD
+        #     # 本番環境では Secretを使う
+        #     value: "todopassword"
         resources:
           requests:
             # スケジューラがNode選択に使う最低保証量
