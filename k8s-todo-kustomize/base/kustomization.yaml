@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# このbaseが管理するリソース一覧
+resources:
+  - todo-api-configmap.yaml
+  - todo-api-deployment.yaml
+  - todo-api-service.yaml
+  - todo-db-deployment.yaml
+  - todo-db-pvc.yaml
+  - todo-db-secret.yaml
+  - todo-db-service.yaml
+  - todo-frontend-deployment.yaml
+  - todo-frontend-service.yaml

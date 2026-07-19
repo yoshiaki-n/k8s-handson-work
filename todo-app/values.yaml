@@ -1,0 +1,40 @@
+# フロントエンドの設定
+frontend:
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+  replicas: 2
+  service:
+    type: ClusterIP
+    port: 80
+# APIサーバーの設定
+api:
+  image:
+    repository: todo-api
+    tag: latest
+    pullPolicy: Never
+  replicas: 2
+  service:
+    port: 8080
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+# データベースの設定
+db:
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  replicas: 1
+  service:
+    port: 5432
+  storage:
+    size: "1Gi"
+  credentials:
+    database: tododb
+    username: todouser
+    # 本番ではシークレットマネージャーで管理する
+    password: todopassword

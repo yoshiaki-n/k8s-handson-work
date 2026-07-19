@@ -1,19 +1,15 @@
 .PHONY: \
 	help \
 	image-build \
-	k8s-apply-all \
-	k8s-apply-api \
-	k8s-apply-api-service \
-	k8s-apply-db \
-	k8s-apply-db-service \
-	k8s-apply-frontend \
-	k8s-apply-frontend-service \
+	k8s-apply \
 	k8s-cluster-create \
 	k8s-cluster-delete \
 	k8s-cluster-list \
-	k8s-delete-all \
+	k8s-delete \
 	k8s-port-forward-gateway \
 	k8s-use-cluster
+
+ENV ?= dev
 
 # ヘルプを表示する
 help:
@@ -48,61 +44,24 @@ image-build:
 	docker build -t todo-api:latest ./app/api
 	kind load docker-image todo-api:latest --name kind-multinode
 
-# データベース（todo-db） Deployment のマニフェストをクラスターに適用する
-k8s-apply-db:
-	kubectl apply -f ./k8s-todo/todo-db-deployment.yaml
-
-# API（todo-api） Deployment のマニフェストをクラスターに適用する
-k8s-apply-api:
-	kubectl apply -f ./k8s-todo/todo-api-deployment.yaml
-
-# フロントエンド（todo-frontend） Deployment のマニフェストをクラスターに適用する
-k8s-apply-frontend:
-	kubectl apply -f ./k8s-todo/todo-frontend-deployment.yaml
-
-# 全マニフェストをクラスタに適用する
-k8s-apply-all:
-	echo "apply all manifests"
-	kubectl apply -f ./k8s-todo/todo-api-configmap.yaml
-	kubectl apply -f ./k8s-todo/todo-db-secret.yaml
-	kubectl apply -f ./k8s-todo/todo-db-pvc.yaml
-	$(MAKE) k8s-apply-db
-	$(MAKE) k8s-apply-api
-	$(MAKE) k8s-apply-frontend
+# 全マニフェストをクラスタに適用する (例: make k8s-apply ENV=dev)
+k8s-apply:
+	echo "apply manifests for $(ENV) environment"
+	kubectl apply -k ./k8s-todo-kustomize/overlays/$(ENV)
 	kubectl apply -f ./k8s-todo/gateway-class.yaml
 	kubectl apply -f ./k8s-todo/todo-gateway.yaml
 	kubectl apply -f ./k8s-todo/metallb-config.yaml
 	kubectl apply -f ./k8s-todo/todo-httproute.yaml
 	echo "Done!!"
 
-# データベース（todo-db） Service のマニフェストをクラスターに適用する
-k8s-apply-db-service:
-	kubectl apply -f ./k8s-todo/todo-db-service.yaml
-
-# API（todo-api） Service のマニフェストをクラスターに適用する
-k8s-apply-api-service:
-	kubectl apply -f ./k8s-todo/todo-api-service.yaml
-
-# Frontend（todo-frontend） Service のマニフェストをクラスターに適用する
-k8s-apply-frontend-service:
-	kubectl apply -f ./k8s-todo/todo-frontend-service.yaml
-
-# 全マニフェストをクラスタから削除する
-k8s-delete-all:
-	echo "delete all manifests"
+# 全マニフェストをクラスタから削除する (例: make k8s-delete ENV=dev)
+k8s-delete:
+	echo "delete manifests for $(ENV) environment"
 	kubectl delete -f ./k8s-todo/todo-httproute.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/metallb-config.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/todo-gateway.yaml --ignore-not-found
 	kubectl delete -f ./k8s-todo/gateway-class.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-db-deployment.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-api-deployment.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-frontend-deployment.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-api-configmap.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-db-secret.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-db-pvc.yaml --ignore-not-found
-	# kubectl delete cnofigmap todo-api-config
-	# kubectl delete secret todo-db-secret
-	# kubectl delete pvc todo-db-pvc
+	kubectl delete -k ./k8s-todo-kustomize/overlays/$(ENV) --ignore-not-found
 	echo "Done!!"
 
 # GatewayのServiceをポートフォワードする（リソース名が動的生成されるためラベルで検索）

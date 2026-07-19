@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Release.Name}}-frontend
+  labels:
+    app: {{.Release.Name}}-frontend
+spec:
+  replicas: {{.Values.frontend.replicas}}
+  selector:
+    matchLabels:
+      app: {{.Release.Name}}-frontend
+  template:
+    metadata:
+      labels:
+        app: {{.Release.Name}}-frontend
+    spec:
+      containers:
+      - name: {{.Release.Name}}-frontend
+        image: {{.Values.frontend.image.repository}}:{{.Values.frontend.image.tag}}
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"

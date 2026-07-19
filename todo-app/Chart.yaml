@@ -1,0 +1,8 @@
+apiVersion: v2
+name: todo-app
+description: A 3-tier Todo application on Kubernetes
+type: application
+# CHartのバージョン
+version: 0.1.0
+# アプリケーションのバージョン(情報提供用)
+appVersion: "1.0.0"
