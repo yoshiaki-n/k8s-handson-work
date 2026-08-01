@@ -7,7 +7,12 @@
 	k8s-cluster-list \
 	k8s-delete \
 	k8s-port-forward-gateway \
-	k8s-use-cluster
+	k8s-use-cluster \
+	helm-template \
+	helm-install \
+	helm-upgrade \
+	helm-rollback \
+	helm-uninstall
 
 ENV ?= dev
 
@@ -73,3 +78,40 @@ k8s-port-forward-gateway:
 	fi; \
 	echo "Port-forwarding to $$SVC_NAME..."; \
 	kubectl port-forward svc/$$SVC_NAME -n envoy-gateway-system 8080:80
+
+# Helm templateの確認
+helm-template:
+	helm template todo-release ./todo-app
+
+# Helm install
+helm-install:
+	helm install todo-release ./todo-app
+
+# Check Helm
+helm-list:
+	helm list
+
+# Upgrade Helm
+helm-upgrade:
+	helm upgrade todo-release ./todo-app
+
+# history Helm
+helm-history:
+	helm history todo-release
+
+# Helmリリースを指定リビジョンにロールバックする（例: make helm-rollback REVISION=1）
+helm-rollback:
+	@if [ -z "$(REVISION)" ]; then \
+		echo "エラー: リビジョン番号を指定してください"; \
+		echo "Usage: make helm-rollback REVISION=<revision-number>"; \
+		echo ""; \
+		echo "利用可能なリビジョンは 'make helm-history' で確認できます"; \
+		exit 1; \
+	fi
+	helm rollback todo-release $(REVISION)
+
+# Uninstall Helm
+helm-uninstall:
+	helm uninstall todo-release
+
+
