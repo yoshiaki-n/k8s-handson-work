@@ -13,7 +13,8 @@
 	helm-install \
 	helm-upgrade \
 	helm-rollback \
-	helm-uninstall
+	helm-uninstall \
+	helm-port-forward-frontend
 
 ENV ?= dev
 
@@ -119,4 +120,6 @@ helm-rollback:
 helm-uninstall:
 	helm uninstall todo-release
 
-
+# フロントエンドのServiceをlocalhost:8080でポートフォワードする
+helm-port-forward-frontend:
+	kubectl port-forward svc/todo-release-frontend 8080:80
