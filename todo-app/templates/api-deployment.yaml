@@ -21,7 +21,7 @@ spec:
       containers:
       - name: todo-api
         image: {{.Values.api.image.repository}}:{{.Values.api.image.tag}}
-        # kindクラスタ内のローカルイメージをつかうため
+        # イメージのpullポリシー（values.yamlで設定）
         imagePullPolicy: {{.Values.api.image.pullPolicy}}
         ports:
           # コンテナが公開するポート（情報提供目的：実際の制限はServerが行う）

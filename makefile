@@ -1,6 +1,7 @@
 .PHONY: \
 	help \
 	image-build \
+	k8s-namespace-create \
 	k8s-apply \
 	k8s-cluster-create \
 	k8s-cluster-delete \
@@ -22,6 +23,10 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@awk '/^# /{ desc=$$0; sub(/^# /, "", desc) } /^[a-zA-Z0-9_-]+:/{ if(desc) { sub(/:.*/, "", $$1); printf "  %-20s %s\n", $$1, desc; desc="" } }' $(MAKEFILE_LIST)
+
+# Create todo-app namespace
+k8s-namespace-create:
+	kubectl create namespace todo-app
 
 # 接続可能なKubernetesクラスターの一覧を表示する
 k8s-cluster-list:
@@ -46,8 +51,8 @@ k8s-cluster-delete:
 
 # Dockerイメージをビルドし、Kindクラスター（kind-multinode）に読み込ませる
 image-build:
-	docker build -t todo-api:latest ./app/api
-	kind load docker-image todo-api:latest --name kind-multinode
+	docker build -t yoshiakin/todo-api:v1.0.0 ./app/api
+	kind load docker-image yoshiakin/todo-api:v1.0.0 --name kind-multinode
 
 # 全マニフェストをクラスタに適用する (例: make k8s-apply ENV=dev)
 k8s-apply:
