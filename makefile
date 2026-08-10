@@ -53,7 +53,9 @@ k8s-cluster-delete:
 # Dockerイメージをビルドし、Kindクラスター（kind-multinode）に読み込ませる
 image-build:
 	docker build -t yoshiakin/todo-api:v1.0.0 ./app/api
+	docker build -t yoshiakin/todo-frontend:v1.0.0 ./app/frontend
 	kind load docker-image yoshiakin/todo-api:v1.0.0 --name kind-multinode
+	kind load docker-image yoshiakin/todo-frontend:v1.0.0 --name kind-multinode
 
 # 全マニフェストをクラスタに適用する (例: make k8s-apply ENV=dev)
 k8s-apply:
@@ -89,21 +91,21 @@ k8s-port-forward-gateway:
 helm-template:
 	helm template todo-release ./todo-app
 
-# Helm install
+# Helm install（todo-app namespaceに自動作成してインストール）
 helm-install:
-	helm install todo-release ./todo-app
+	helm install todo-release ./todo-app -n todo-app --create-namespace
 
 # Check Helm
 helm-list:
-	helm list
+	helm list -n todo-app
 
 # Upgrade Helm
 helm-upgrade:
-	helm upgrade todo-release ./todo-app
+	helm upgrade todo-release ./todo-app -n todo-app
 
 # history Helm
 helm-history:
-	helm history todo-release
+	helm history todo-release -n todo-app
 
 # Helmリリースを指定リビジョンにロールバックする（例: make helm-rollback REVISION=1）
 helm-rollback:
@@ -114,12 +116,12 @@ helm-rollback:
 		echo "利用可能なリビジョンは 'make helm-history' で確認できます"; \
 		exit 1; \
 	fi
-	helm rollback todo-release $(REVISION)
+	helm rollback todo-release $(REVISION) -n todo-app
 
 # Uninstall Helm
 helm-uninstall:
-	helm uninstall todo-release
+	helm uninstall todo-release -n todo-app
 
 # フロントエンドのServiceをlocalhost:8080でポートフォワードする
 helm-port-forward-frontend:
-	kubectl port-forward svc/todo-release-frontend 8080:80
+	kubectl port-forward svc/todo-release-frontend 8080:80 -n todo-app

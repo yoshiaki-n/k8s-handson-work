@@ -1,3 +1,4 @@
+namespace: todo-app
 # フロントエンドの設定
 frontend:
   image:

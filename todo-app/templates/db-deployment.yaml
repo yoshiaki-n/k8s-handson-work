@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   # Deployment　の Volumes　でこのPVCを参照する
   name: {{.Release.Name}}-db-pvc
+  namespace: {{.Values.namespace}}
 spec:
   accessModes:
     # 同時に１つのNodeのみ読み書き可能（DBに適切なモード）
@@ -16,6 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.Release.Name}}-db
+  namespace: {{.Values.namespace}}
   labels:
     app: {{.Release.Name}}-db
 spec:
