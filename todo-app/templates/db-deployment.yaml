@@ -1,61 +1,64 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  # Deployment　の Volumes　でこのPVCを参照する
-  name: {{.Release.Name}}-db-pvc
-  namespace: {{.Values.namespace}}
+  name: todo-db-pvc
+  namespace: {{ .Values.namespace }}
 spec:
   accessModes:
-    # 同時に１つのNodeのみ読み書き可能（DBに適切なモード）
     - ReadWriteOnce
   resources:
     requests:
-      # 1Gibのストレージを要求する
-      storage: {{.Values.db.storage.size}}
+      storage: {{ .Values.db.storage.size }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{.Release.Name}}-db
-  namespace: {{.Values.namespace}}
+  name: todo-db
+  namespace: {{ .Values.namespace }}
   labels:
-    app: {{.Release.Name}}-db
+    app: todo-db
 spec:
-  # DBはシングルインスタンス
-  replicas: {{.Values.db.replicas}}
+  replicas: {{ .Values.db.replicas }}
   selector:
     matchLabels:
-      app: {{.Release.Name}}-db
+      app: todo-db
   template:
     metadata:
       labels:
-        app: {{.Release.Name}}-db
+        app: todo-db
     spec:
       containers:
-        - name: todo-db
-          image: {{.Values.db.image.repository}}:{{.Values.db.image.tag}}
+        - name: postgres
+          image: {{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}
           ports:
-            - containerPort: {{.Values.db.service.port}}
+            - containerPort: {{ .Values.db.service.port }}
           env:
             - name: POSTGRES_DB
-              value: "{{.Values.db.credentials.database}}"
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-db-config
+                  key: POSTGRES_DB
             - name: POSTGRES_USER
-              value: "{{.Values.db.credentials.username}}"
+              valueFrom:
+                secretKeyRef:
+                  name: todo-db-secret
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: "{{.Values.db.credentials.password}}"
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata
+              valueFrom:
+                secretKeyRef:
+                  name: todo-db-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
+              cpu: {{ .Values.db.resources.requests.cpu }}
+              memory: {{ .Values.db.resources.requests.memory }}
             limits:
-              cpu: "500m"
-              memory: "512Mi"
-          volumeMounts:
-            - name: db-storage
-              mountPath: /var/lib/postgresql/data
+              cpu: {{ .Values.db.resources.limits.cpu }}
+              memory: {{ .Values.db.resources.limits.memory }}
       volumes:
-        - name: db-storage
+        - name: db-data
           persistentVolumeClaim:
-            claimName: {{.Release.Name}}-db-pvc
+            claimName: todo-db-pvc

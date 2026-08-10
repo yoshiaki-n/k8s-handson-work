@@ -2,28 +2,34 @@ namespace: todo-app
 # フロントエンドの設定
 frontend:
   image:
-    repository: nginx
-    tag: "1.27-alpine"
+    repository: yoshiakin/todo-frontend
+    tag: "v1.0.0"
   replicas: 2
   service:
     type: ClusterIP
     port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
 # APIサーバーの設定
 api:
   image:
     repository: yoshiakin/todo-api
     tag: v1.0.0
-    pullPolicy: IfNotPresent
   replicas: 2
   service:
     port: 8080
   resources:
     requests:
-      cpu: "100m"
-      memory: "128Mi"
+      cpu: 100m
+      memory: 64Mi
     limits:
-      cpu: "500m"
-      memory: "256Mi"
+      cpu: 200m
+      memory: 128Mi
 # データベースの設定
 db:
   image:
@@ -33,9 +39,16 @@ db:
   service:
     port: 5432
   storage:
-    size: "1Gi"
+    size: 1Gi
   credentials:
     database: tododb
-    username: todouser
+    username: postgres
     # 本番ではシークレットマネージャーで管理する
-    password: todopassword
+    password: postgres
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

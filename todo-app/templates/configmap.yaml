@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-db-config
+  namespace: {{ .Values.namespace }}
+data:
+  POSTGRES_DB: {{ .Values.db.credentials.database }}

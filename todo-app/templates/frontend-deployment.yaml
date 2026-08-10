@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{.Release.Name}}-frontend
-  namespace: {{.Values.namespace}}
+  name: todo-frontend
+  namespace: {{ .Values.namespace }}
   labels:
-    app: {{.Release.Name}}-frontend
+    app: todo-frontend
 spec:
-  replicas: {{.Values.frontend.replicas}}
+  replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels:
-      app: {{.Release.Name}}-frontend
+      app: todo-frontend
   template:
     metadata:
       labels:
-        app: {{.Release.Name}}-frontend
+        app: todo-frontend
     spec:
       containers:
-      - name: {{.Release.Name}}-frontend
-        image: {{.Values.frontend.image.repository}}:{{.Values.frontend.image.tag}}
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            cpu: "50m"
-            memory: "64Mi"
-          limits:
-            cpu: "200m"
-            memory: "128Mi"
+        - name: todo-frontend
+          image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+          ports:
+            - containerPort: {{ .Values.frontend.service.port }}
+          resources:
+            requests:
+              cpu: {{ .Values.frontend.resources.requests.cpu }}
+              memory: {{ .Values.frontend.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.frontend.resources.limits.cpu }}
+              memory: {{ .Values.frontend.resources.limits.memory }}

@@ -124,4 +124,4 @@ helm-uninstall:
 
 # フロントエンドのServiceをlocalhost:8080でポートフォワードする
 helm-port-forward-frontend:
-	kubectl port-forward svc/todo-release-frontend 8080:80 -n todo-app
+	kubectl port-forward svc/todo-frontend 8080:80 -n todo-app

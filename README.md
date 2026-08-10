@@ -106,3 +106,35 @@ Mac環境（Docker Desktopなど）からKindクラスタ内のMetalLBのIPへ�
    # / へのアクセス (todo-frontend へのルーティング)
    curl http://localhost:8080/
    ```
+
+## Helmを利用したtodo-appのデプロイ手順（Makefile使用）
+
+ローカル環境のKindクラスターをリセットし、Helmを利用して `todo-app` をデプロイ・確認する一連の手順です。
+
+### 1. クラスターの初期化と再作成
+既存のクラスターがある場合は削除し、新しく作成し直します。
+```bash
+make k8s-cluster-delete
+make k8s-cluster-create
+```
+
+### 2. イメージのビルドとロード
+最新のアプリケーションイメージをビルドし、Kindクラスター内にロードします。
+この手順を行わないと、新しいクラスター上でローカルイメージがPullできずエラー（ImagePullBackOffなど）になります。
+```bash
+make image-build
+```
+
+### 3. Helmチャートのインストール
+Helmを使用して、`todo-app` 名前空間にアプリケーション一式をデプロイします。
+```bash
+make helm-install
+```
+※ インストール後、`kubectl get pods -n todo-app -w` などでPodがすべて `Running` / `Ready` になるまで待ちます。
+
+### 4. 動作確認（ポートフォワード）
+ローカルマシンからアプリケーションにアクセスするため、フロントエンドのServiceにポートフォワードを行います。
+```bash
+make helm-port-forward-frontend
+```
+実行後、ブラウザで `http://localhost:8080` にアクセスしてフロントエンド画面が表示されれば成功です。

@@ -1,51 +1,61 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{.Release.Name}}-api
-  namespace: {{.Values.namespace}}
+  name: todo-api
+  namespace: {{ .Values.namespace }}
   labels:
-    # Deploymentリソース自体のラベル
-    app: {{.Release.Name}}-api
+    app: todo-api
 spec:
-  # 常に２つのPodを維持する（可用性のため）
-  replicas: {{.Values.api.replicas}}
+  replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
-      # このＳｅｌｅｃｔｏｒと一致するPodをこのDeploymentが管理する
-      app: {{.Release.Name}}-api
+      app: todo-api
   template:
     metadata:
       labels:
-        # Podにつけるラベル(selectorと一致させる必要がある)
-        app: {{.Release.Name}}-api
+        app: todo-api
     spec:
       containers:
-      - name: todo-api
-        image: {{.Values.api.image.repository}}:{{.Values.api.image.tag}}
-        # イメージのpullポリシー（values.yamlで設定）
-        imagePullPolicy: {{.Values.api.image.pullPolicy}}
-        ports:
-          # コンテナが公開するポート（情報提供目的：実際の制限はServerが行う）
-          - containerPort: {{.Values.api.service.port}}
-        env:
-          - name: DB_HOST
-            value: "{{.Release.Name}}-db"
-          - name: DB_PORT
-            value: "{{.Values.db.service.port}}"
-          - name: DB_NAME
-            value: "{{.Values.db.credentials.database}}"
-          - name: DB_USER
-            value: "{{.Values.db.credentials.username}}"
-          - name: DB_PASSWORD
-            # 本番環境では Secretを使う
-            value: "{{.Values.db.credentials.password}}"
-        resources:
-          requests:
-            # スケジューラがNode選択に使う最低保証量
-            cpu: {{.Values.api.resources.requests.cpu | quote}}
-            memory: {{.Values.api.resources.requests.memory | quote}}
-          limits:
-            # この値を超えるとCPUがスロットリングされる
-            cpu: {{.Values.api.resources.limits.cpu | quote}}
-            #　この値を超えるとOOMキルされる
-            memory: {{.Values.api.resources.limits.memory | quote}}
+        - name: todo-api
+          image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+          ports:
+            - containerPort: {{ .Values.api.service.port }}
+          env:
+            - name: DB_HOST
+              value: todo-db
+            - name: DB_PORT
+              value: "{{ .Values.db.service.port }}"
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-db-config
+                  key: POSTGRES_DB
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: todo-db-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: todo-db-secret
+                  key: POSTGRES_PASSWORD
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.service.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: {{ .Values.api.resources.requests.cpu }}
+              memory: {{ .Values.api.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.api.resources.limits.cpu }}
+              memory: {{ .Values.api.resources.limits.memory }}
