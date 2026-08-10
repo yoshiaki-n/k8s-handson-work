@@ -20,7 +20,7 @@ api:
   image:
     repository: yoshiakin/todo-api
     tag: v1.0.0
-  replicas: 2
+  replicas: 3
   service:
     port: 8080
   resources:
