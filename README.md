@@ -110,6 +110,7 @@ Mac環境（Docker Desktopなど）からKindクラスタ内のMetalLBのIPへ�
 ## Helmを利用したtodo-appのデプロイ手順（Makefile使用）
 
 ローカル環境のKindクラスターをリセットし、Helmを利用して `todo-app` をデプロイ・確認する一連の手順です。
+※ AWS ECR上のイメージを使用するため、事前にGitHub ActionsのCI等でイメージがプッシュされていること、および実行環境でAWS CLIの認証が通っていることを前提とします。
 
 ### 1. クラスターの初期化と再作成
 既存のクラスターがある場合は削除し、新しく作成し直します。
@@ -118,19 +119,18 @@ make k8s-cluster-delete
 make k8s-cluster-create
 ```
 
-### 2. イメージのビルドとロード
-最新のアプリケーションイメージをビルドし、Kindクラスター内にロードします。
-この手順を行わないと、新しいクラスター上でローカルイメージがPullできずエラー（ImagePullBackOffなど）になります。
-```bash
-make image-build
-```
-
-### 3. Helmチャートのインストール
-Helmを使用して、`todo-app` 名前空間にアプリケーション一式をデプロイします。
+### 2. Helmチャートの初回インストール
+まずはHelmを使用して、`todo-app` 名前空間にアプリケーションのリソース一式を作成します。
 ```bash
 make helm-install
 ```
-※ インストール後、`kubectl get pods -n todo-app -w` などでPodがすべて `Running` / `Ready` になるまで待ちます。
+
+### 3. ECRの最新イメージを使用したデプロイ（アップグレード）
+`make helm-deploy-ecr` コマンドを実行し、AWS ECR上のレジストリと最新のGitコミットハッシュを参照するようにDeploymentを更新（デプロイ）します。
+```bash
+make helm-deploy-ecr
+```
+※ 実行後、`kubectl get pods -n todo-app -w` などでPodが新しいイメージで再起動し、すべて `Running` / `Ready` になるまで待ちます。
 
 ### 4. 動作確認（ポートフォワード）
 ローカルマシンからアプリケーションにアクセスするため、フロントエンドのServiceにポートフォワードを行います。

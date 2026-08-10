@@ -12,6 +12,7 @@
 	helm-template \
 	helm-install \
 	helm-upgrade \
+	helm-deploy-ecr \
 	helm-rollback \
 	helm-uninstall \
 	helm-port-forward-frontend
@@ -102,6 +103,18 @@ helm-list:
 # Upgrade Helm
 helm-upgrade:
 	helm upgrade todo-release ./todo-app -n todo-app
+
+# ECR上の最新イメージ（Gitのコミットハッシュ）を使用してHelmデプロイ（アップグレード）を行う
+helm-deploy-ecr:
+	@AWS_ACCOUNT_ID=$$(aws sts get-caller-identity --query Account --output text); \
+	ECR_REGISTRY=$${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com; \
+	GIT_HEAD=$$(git rev-parse HEAD); \
+	echo "Deploying images from: $$ECR_REGISTRY with tag: $$GIT_HEAD"; \
+	helm upgrade todo-release ./todo-app -n todo-app \
+		--set api.image.repository=$$ECR_REGISTRY/todo-api \
+		--set api.image.tag=$$GIT_HEAD \
+		--set frontend.image.repository=$$ECR_REGISTRY/todo-frontend \
+		--set frontend.image.tag=$$GIT_HEAD
 
 # history Helm
 helm-history:
