@@ -42,9 +42,6 @@ db:
     size: 1Gi
   credentials:
     database: tododb
-    username: postgres
-    # 本番ではシークレットマネージャーで管理する
-    password: postgres
   resources:
     requests:
       cpu: 100m
