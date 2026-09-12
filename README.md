@@ -110,7 +110,7 @@ Mac環境（Docker Desktopなど）からKindクラスタ内のMetalLBのIPへ�
 ## Helmを利用したtodo-appのデプロイ手順（Makefile使用）
 
 ローカル環境のKindクラスターをリセットし、Helmを利用して `todo-app` をデプロイ・確認する一連の手順です。
-※ AWS ECR上のイメージを使用するため、事前にGitHub ActionsのCI等でイメージがプッシュされていること、および実行環境でAWS CLIの認証が通っていることを前提とします。
+※ AWS ECR上のイメージを使用する場合は、事前にGitHub ActionsのCI等でイメージがプッシュされていること、および実行環境でAWS CLIの認証が通っていることを前提とします。
 
 ### 1. クラスターの初期化と再作成
 既存のクラスターがある場合は削除し、新しく作成し直します。
@@ -119,20 +119,37 @@ make k8s-cluster-delete
 make k8s-cluster-create
 ```
 
-### 2. Helmチャートの初回インストール
+### 2. コンテナイメージのビルドとクラスターへのロード（ローカルでの検証用）
+AWS ECRを使わず、ローカルでDockerイメージをビルドして検証する場合は、以下のコマンドで作成したKindクラスター（各ノード）にロードします。
+```bash
+make image-build
+```
+
+### 3. SealedSecretsのセットアップとSecretの再暗号化
+Helmチャート内で `SealedSecret` を使用しているため、クラスター再構築時はコントローラーのインストールと暗号化鍵の再作成（再暗号化）が必要です。
+```bash
+# SealedSecretsコントローラーのインストール
+make k8s-setup-sealed-secrets
+
+# コントローラーが起動するまで少し待機した後、新しいクラスターの鍵で再暗号化
+kubeseal --controller-name=sealed-secrets --controller-namespace=kube-system --format yaml < secret-raw.yaml > todo-app/templates/sealed-secret.yaml
+```
+
+### 4. Helmチャートの初回インストール
 まずはHelmを使用して、`todo-app` 名前空間にアプリケーションのリソース一式を作成します。
+（ステップ2を実施した場合はローカルイメージが、実施しなかった場合はChartのデフォルトイメージがデプロイされます）
 ```bash
 make helm-install
 ```
 
-### 3. ECRの最新イメージを使用したデプロイ（アップグレード）
-`make helm-deploy-ecr` コマンドを実行し、AWS ECR上のレジストリと最新のGitコミットハッシュを参照するようにDeploymentを更新（デプロイ）します。
+### 5. ECRの最新イメージを使用したデプロイ・アップグレード（本番同様の手順）
+AWS ECR上のレジストリと最新のGitコミットハッシュを参照してデプロイする場合は、以下のコマンドを実行してDeploymentを更新します。
 ```bash
 make helm-deploy-ecr
 ```
 ※ 実行後、`kubectl get pods -n todo-app -w` などでPodが新しいイメージで再起動し、すべて `Running` / `Ready` になるまで待ちます。
 
-### 4. 動作確認（ポートフォワード）
+### 6. 動作確認（ポートフォワード）
 ローカルマシンからアプリケーションにアクセスするため、フロントエンドのServiceにポートフォワードを行います。
 ```bash
 make helm-port-forward-frontend

@@ -2,11 +2,11 @@
 	help \
 	image-build \
 	k8s-namespace-create \
-	k8s-apply \
+	k8s-setup-gateway \
+	k8s-setup-sealed-secrets \
 	k8s-cluster-create \
 	k8s-cluster-delete \
 	k8s-cluster-list \
-	k8s-delete \
 	k8s-port-forward-gateway \
 	k8s-use-cluster \
 	helm-template \
@@ -34,6 +34,19 @@ k8s-namespace-create:
 k8s-cluster-list:
 	kubectl config get-clusters
 
+# Gateway API, Envoy Gateway, MetalLBの前提リソースをインストールする
+k8s-setup-gateway:
+	kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+	kubectl apply --server-side -f https://github.com/envoyproxy/gateway/releases/download/v1.3.0/install.yaml
+	kubectl apply --server-side -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+	kubectl wait --namespace metallb-system --for=condition=ready pod --selector=app=metallb --timeout=90s
+
+# SealedSecretsのコントローラーをインストールする
+k8s-setup-sealed-secrets:
+	helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
+	helm repo update
+	helm install sealed-secrets sealed-secrets/sealed-secrets -n kube-system --create-namespace
+
 # 指定したクラスター（コンテキスト）に接続先を切り替える（例: make k8s-use-cluster CLUSTER=kind-kind-multinode）
 k8s-use-cluster:
 	@if [ -z "$(CLUSTER)" ]; then \
@@ -58,25 +71,6 @@ image-build:
 	kind load docker-image yoshiakin/todo-api:v1.0.0 --name kind-multinode
 	kind load docker-image yoshiakin/todo-frontend:v1.0.0 --name kind-multinode
 
-# 全マニフェストをクラスタに適用する (例: make k8s-apply ENV=dev)
-k8s-apply:
-	echo "apply manifests for $(ENV) environment"
-	kubectl apply -k ./k8s-todo-kustomize/overlays/$(ENV)
-	kubectl apply -f ./k8s-todo/gateway-class.yaml
-	kubectl apply -f ./k8s-todo/todo-gateway.yaml
-	kubectl apply -f ./k8s-todo/metallb-config.yaml
-	kubectl apply -f ./k8s-todo/todo-httproute.yaml
-	echo "Done!!"
-
-# 全マニフェストをクラスタから削除する (例: make k8s-delete ENV=dev)
-k8s-delete:
-	echo "delete manifests for $(ENV) environment"
-	kubectl delete -f ./k8s-todo/todo-httproute.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/metallb-config.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/todo-gateway.yaml --ignore-not-found
-	kubectl delete -f ./k8s-todo/gateway-class.yaml --ignore-not-found
-	kubectl delete -k ./k8s-todo-kustomize/overlays/$(ENV) --ignore-not-found
-	echo "Done!!"
 
 # GatewayのServiceをポートフォワードする（リソース名が動的生成されるためラベルで検索）
 k8s-port-forward-gateway:
