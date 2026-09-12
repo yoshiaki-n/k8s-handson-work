@@ -4,6 +4,7 @@
 	k8s-namespace-create \
 	k8s-setup-gateway \
 	k8s-setup-sealed-secrets \
+	k8s-setup-prometheus \
 	k8s-cluster-create \
 	k8s-cluster-delete \
 	k8s-cluster-list \
@@ -46,6 +47,13 @@ k8s-setup-sealed-secrets:
 	helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
 	helm repo update
 	helm install sealed-secrets sealed-secrets/sealed-secrets -n kube-system --create-namespace
+
+# Helm ChartでPrometheus Stackをインストールする
+k8s-setup-prometheus:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	helm repo update
+	kubectl create namespace monitoring
+	helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f monitoring/prometheus-values.yaml
 
 # 指定したクラスター（コンテキスト）に接続先を切り替える（例: make k8s-use-cluster CLUSTER=kind-kind-multinode）
 k8s-use-cluster:
