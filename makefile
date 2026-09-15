@@ -1,6 +1,9 @@
 .PHONY: \
 	help \
 	image-build \
+	k8s-contexts \
+	k8s-current-context \
+	k8s-use-context \
 	k8s-namespace-create \
 	k8s-setup-gateway \
 	k8s-setup-sealed-secrets \
@@ -10,14 +13,16 @@
 	k8s-cluster-delete \
 	k8s-cluster-list \
 	k8s-port-forward-gateway \
-	k8s-use-cluster \
 	helm-template \
 	helm-install \
 	helm-upgrade \
 	helm-deploy-ecr \
 	helm-rollback \
 	helm-uninstall \
-	helm-port-forward-frontend
+	helm-port-forward-frontend \
+	eks-cluster-dry-run \
+	eks-cluster-create \
+	eks-cluster-delete
 
 ENV ?= dev
 
@@ -28,13 +33,25 @@ help:
 	@echo "Targets:"
 	@awk '/^# /{ desc=$$0; sub(/^# /, "", desc) } /^[a-zA-Z0-9_-]+:/{ if(desc) { sub(/:.*/, "", $$1); printf "  %-20s %s\n", $$1, desc; desc="" } }' $(MAKEFILE_LIST)
 
+# 接続可能なKubernetesコンテキストの一覧を表示する
+k8s-contexts:
+	kubectl config get-contexts
+
+# 現在のKubernetesコンテキストを表示する
+k8s-current-context:
+	kubectl config current-context
+
+# Kubernetesコンテキストを切り替える (例: make k8s-use-context CTX=kind-kind)
+k8s-use-context:
+	@if [ -z "$(CTX)" ]; then \
+		echo "Error: CTX is required. Usage: make k8s-use-context CTX=<context-name>"; \
+		exit 1; \
+	fi
+	kubectl config use-context $(CTX)
+
 # Create todo-app namespace
 k8s-namespace-create:
 	kubectl create namespace todo-app
-
-# 接続可能なKubernetesクラスターの一覧を表示する
-k8s-cluster-list:
-	kubectl config get-clusters
 
 # Gateway API, Envoy Gateway, MetalLBの前提リソースをインストールする
 k8s-setup-gateway:
@@ -61,14 +78,6 @@ k8s-setup-monitoring:
 
 k8s-port-forward-monitoring:
 	kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
-
-# 指定したクラスター（コンテキスト）に接続先を切り替える（例: make k8s-use-cluster CLUSTER=kind-kind-multinode）
-k8s-use-cluster:
-	@if [ -z "$(CLUSTER)" ]; then \
-		echo "Usage: make k8s-use-cluster CLUSTER=<cluster-name>"; \
-		exit 1; \
-	fi
-	kubectl config use-context $(CLUSTER)
 
 # Kindを使ってマルチノードのKubernetesクラスターを作成する
 k8s-cluster-create:
@@ -147,3 +156,15 @@ helm-uninstall:
 # フロントエンドのServiceをlocalhost:8080でポートフォワードする
 helm-port-forward-frontend:
 	kubectl port-forward svc/todo-frontend 8080:80 -n todo-app
+
+# EKSクラスター定義のDry-Run
+eks-cluster-dry-run:
+	eksctl create cluster -f eks/cluster-config.yaml --dry-run
+
+# EKSクラスターの作成
+eks-cluster-create:
+	eksctl create cluster -f eks/cluster-config.yaml
+
+# EKSクラスターの削除
+eks-cluster-delete:
+	eksctl delete cluster -f eks/cluster-config.yaml --wait

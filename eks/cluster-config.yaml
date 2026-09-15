@@ -1,0 +1,47 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+# クラスター名、リージョン、Kubernetesのバージョンを定義
+metadata:
+  name: todo-eks-cluster
+  region: ap-northeast-1
+  version: "1.35"
+
+# OIDCプロバイダーを有効にする
+iam:
+  withOIDC: true
+
+# AWSマネージノードグループを定義
+managedNodeGroups:
+  - name: workers
+    instanceType: t3.medium
+    # 起動時のノード数
+    desiredCapacity: 2
+    # オートスケーリングの範囲
+    minSize: 1
+    maxSize: 3
+    # ディスク容量
+    volumeSize: 20
+    labels:
+      role: worker
+    tags:
+      environment: learning
+    #　EBS CSI Driverに必要なIAMポリシーをノードに付与する
+    iam:
+      withAddonPolicies:
+        ebs: true
+
+# EKSマネージドアドオンを定義
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: eks-pod-identity-agent
+    version: latest
+  - name: aws-ebs-csi-driver
+    version: latest
+
+
