@@ -15,7 +15,7 @@ prometheus:
         cpu: 500m
         memory: 512Mi
     # データ保持期間
-    retension: 7d
+    retention: 7d
     storageSpec:
       volumeClaimTemplate:
         spec:
@@ -27,7 +27,7 @@ grafana:
   adminPassword: admin
   # ダッシュボードプロビジョニング
   dashboardProviders:
-    dashboardProviders.yaml:
+    dashboardproviders.yaml:
       apiVersion: 1
       providers:
         - name: custom
@@ -38,15 +38,15 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/custom
-    dashboardsConfigMaps:
-      custom: todo-app-dashboard
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 200m
-        memory: 256Mi
+  dashboardsConfigMaps:
+    custom: todo-app-dashboard
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
 alertmanager:
   alertmanagerSpec:
     resources:

@@ -1,0 +1,127 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "description": "Todo App monitoring dashboard",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "title": "HTTP Request Rate",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "rate(http_requests_total{namespace=\"todo-app\"}[5m])",
+                    "legendFormat": "{{pod}} - {{method}} {{path}}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "title": "HTTP Error Rate (5xx)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "rate(http_requests_total{namespace=\"todo-app\", status=~\"5..\"}[5m])",
+                    "legendFormat": "{{pod}} - {{status}}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            }
+        },
+        {
+            "title": "Pod CPU Usage",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "rate(container_cpu_usage_seconds_total{namespace=\"todo-app\"}[5m])",
+                    "legendFormat": "{{pod}}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            }
+        },
+        {
+            "title": "Pod Memory Usage",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "container_memory_working_set_bytes{namespace=\"todo-app\"}",
+                    "legendFormat": "{{pod}}"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 8
+            }
+        },
+        {
+            "title": "Pod Restart Count",
+            "type": "stat",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_pod_container_status_restarts_total{namespace=\"todo-app\"}) by (pod)",
+                    "legendFormat": "{{pod}}"
+                }
+            ],
+            "gridPos": {
+                "h": 4,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            }
+        }
+    ],
+    "schemaVersion": 39,
+    "tags": [
+        "todo-app",
+        "kubernetes"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "title": "Todo App Dashboard",
+    "uid": "todo-app-dashboard"
+}

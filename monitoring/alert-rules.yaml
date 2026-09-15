@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: todo-app-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: todo-app
+      rules:
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{
+              namespace="todo-app"
+            }[5m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash-looping"
+            description: >-
+              Pod {{ $labels.pod }} in namespace {{ $labels.namespace }}
+              has been restarting for more than 5 minutes.
+
+        - alert: HighMemoryUsage
+          expr: |
+            container_memory_working_set_bytes{namespace="todo-app"}
+            / container_spec_memory_limit_bytes{namespace="todo-app"}
+            > 0.9
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} memory usage above 90%"

@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: todo-api
+  namespace: todo-app
+  labels:
+    app: todo-app
+spec:
+  selector:
+    matchLabels:
+      app: todo-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

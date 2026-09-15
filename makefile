@@ -4,7 +4,8 @@
 	k8s-namespace-create \
 	k8s-setup-gateway \
 	k8s-setup-sealed-secrets \
-	k8s-setup-prometheus \
+	k8s-setup-monitoring \
+	k8s-port-forward-monitoring \
 	k8s-cluster-create \
 	k8s-cluster-delete \
 	k8s-cluster-list \
@@ -49,11 +50,17 @@ k8s-setup-sealed-secrets:
 	helm install sealed-secrets sealed-secrets/sealed-secrets -n kube-system --create-namespace
 
 # Helm ChartでPrometheus Stackをインストールする
-k8s-setup-prometheus:
-	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+k8s-setup-monitoring:
+	kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 	helm repo update
-	kubectl create namespace monitoring
-	helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f monitoring/prometheus-values.yaml
+	kubectl create configmap todo-app-dashboard --from-file=todo-app-dashboard.json=monitoring/grafana-dashboard.json -n monitoring --dry-run=client -o yaml | kubectl apply -f -
+	helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f monitoring/prometheus-values.yaml
+	kubectl apply -f monitoring/servicemonitor.yaml
+	kubectl apply -f monitoring/alert-rules.yaml
+
+k8s-port-forward-monitoring:
+	kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
 
 # 指定したクラスター（コンテキスト）に接続先を切り替える（例: make k8s-use-cluster CLUSTER=kind-kind-multinode）
 k8s-use-cluster:
