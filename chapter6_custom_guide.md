@@ -272,8 +272,34 @@ ArgoCDが立ち上がったら、既存の `argocd/todo-app.yaml` を適用し�
 
 ```bash
 kubectl apply -f argocd/todo-app.yaml
-```
 
+# 自身のAWSアカウントIDを変数に設定
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+# ArgoCDのApplicationにパッチを当てて、使用するイメージリポジトリをECRに変更する
+cat << EOF > patch.json
+{
+  "spec": {
+    "source": {
+      "helm": {
+        "parameters": [
+          {
+            "name": "frontend.image.repository",
+            "value": "${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/todo-frontend"
+          },
+          {
+            "name": "api.image.repository",
+            "value": "${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/todo-api"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+kubectl patch application todo-app -n argocd --type=merge --patch-file patch.json
+rm patch.json
+```
 ### 7.1 ArgoCD Web UIへのアクセス
 
 EKSクラスター上のArgoCD Web UIにアクセスするには、port-forwardを使用します。

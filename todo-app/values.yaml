@@ -3,7 +3,7 @@ namespace: todo-app
 frontend:
   image:
     repository: yoshiakin/todo-frontend
-    tag: "v1.0.0"
+    tag: "latest"
   replicas: 2
   service:
     type: ClusterIP
@@ -19,7 +19,7 @@ frontend:
 api:
   image:
     repository: yoshiakin/todo-api
-    tag: v1.0.0
+    tag: "latest"
   replicas: 3
   service:
     port: 8080
