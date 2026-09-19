@@ -86,3 +86,5 @@ Temporary Items
 
 tmp/**
 secret-raw.yaml
+iam-policy.json
+Kubernetes実践ハンズオン_ GitHub Actions・ArgoCD・Amazon EKSで本番運用.pdf

@@ -51,7 +51,7 @@ k8s-use-context:
 
 # Create todo-app namespace
 k8s-namespace-create:
-	kubectl create namespace todo-app
+	kubectl create namespace todo-app --dry-run=client -o yaml | kubectl apply -f -
 
 # Gateway API, Envoy Gateway, MetalLBの前提リソースをインストールする
 k8s-setup-gateway:
@@ -120,7 +120,7 @@ helm-list:
 
 # Upgrade Helm
 helm-upgrade:
-	helm upgrade todo-release ./todo-app -n todo-app
+	helm upgrade --install todo-release ./todo-app -n todo-app
 
 # ECR上の最新イメージ（Gitのコミットハッシュ）を使用してHelmデプロイ（アップグレード）を行う
 helm-deploy-ecr:
@@ -128,7 +128,7 @@ helm-deploy-ecr:
 	ECR_REGISTRY=$${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com; \
 	GIT_HEAD=$$(git rev-parse HEAD); \
 	echo "Deploying images from: $$ECR_REGISTRY with tag: $$GIT_HEAD"; \
-	helm upgrade todo-release ./todo-app -n todo-app \
+	helm upgrade --install todo-release ./todo-app -n todo-app --create-namespace \
 		--set api.image.repository=$$ECR_REGISTRY/todo-api \
 		--set api.image.tag=$$GIT_HEAD \
 		--set frontend.image.repository=$$ECR_REGISTRY/todo-frontend \
