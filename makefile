@@ -168,3 +168,20 @@ eks-cluster-create:
 # EKSクラスターの削除
 eks-cluster-delete:
 	eksctl delete cluster -f eks/cluster-config.yaml --wait
+
+# AWS POD用のロール作成
+create-pod-iam-role:
+	# IAMロールの作成
+	aws iam create-role \
+	--role-name todo-eks-ebs-csi-role \
+	--assume-role-policy-document file://eks/trust-policy.json
+	# AWSマネージドポリシーのアタッチ
+	aws iam attach-role-policy \
+	--role-name todo-eks-ebs-csi-role \
+	--policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+	# Pod Identityの関連付
+	aws eks create-pod-identity-association \
+	--cluster-name todo-eks-cluster \
+	--namespace kube-system \
+	--service-account ebs-csi-controller-sa \
+	--role-arn arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/todo-eks-ebs-csi-role
