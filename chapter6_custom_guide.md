@@ -277,6 +277,7 @@ kubectl apply -f argocd/todo-app.yaml
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 # ArgoCDのApplicationにパッチを当てて、使用するイメージリポジトリをECRに変更する
+# (※ GitHub等のリポジトリにAWSアカウントIDをハードコードさせないためのセキュリティ対策です)
 cat << EOF > patch.json
 {
   "spec": {

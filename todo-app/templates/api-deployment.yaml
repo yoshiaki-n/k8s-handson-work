@@ -18,6 +18,7 @@ spec:
       containers:
         - name: todo-api
           image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+          imagePullPolicy: Always
           ports:
             - containerPort: {{ .Values.api.service.port }}
           env:
