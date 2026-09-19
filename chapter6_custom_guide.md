@@ -274,4 +274,110 @@ ArgoCDが立ち上がったら、既存の `argocd/todo-app.yaml` を適用し�
 kubectl apply -f argocd/todo-app.yaml
 ```
 
-これで、ローカル（minikube）で動作していたアプリケーションとGitOps環境が、完全にAmazon EKSへ移行されました。
+### 7.1 ArgoCD Web UIへのアクセス
+
+EKSクラスター上のArgoCD Web UIにアクセスするには、port-forwardを使用します。
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8443:443
+```
+
+初期パスワードを取得します。
+
+```bash
+kubectl get secret argocd-initial-admin-secret -n argocd \
+  -o jsonpath='{.data.password}' | base64 -d && echo
+```
+
+ブラウザで `https://localhost:8443` を開き、ユーザー名 `admin` と上記のパスワードでログインします。
+※初期パスワードはログイン後すぐに変更してください。
+
+### 7.2 同期状態の確認
+
+ArgoCD Web UIまたはCLIで、アプリケーションの同期状態を確認します。
+
+```bash
+kubectl get application -n argocd
+```
+
+`SYNC STATUS` が `Synced` かつ `HEALTH STATUS` が `Healthy` であれば、GitリポジトリのマニフェストとEKSクラスターの状態が一致しています。第3章でminikube上に構築したGitOpsワークフローが、EKSでもそのまま機能しています。
+
+---
+
+## 8. 監視スタックの再構築
+
+第4章でminikube上に構築したPrometheus + Grafanaの監視スタックを、EKSクラスターにもデプロイします。`kube-prometheus-stack` はHelmチャートで管理されているため、同じコマンドで再構築できます。
+
+```bash
+kubectl create namespace monitoring --dry-run=client -o yaml \
+  | kubectl apply -f -
+```
+
+第4章と同様に、Helmインストールの前にGrafanaダッシュボードのConfigMapを作成してください。このConfigMapがない場合、GrafanaのPodが起動に失敗します。
+
+```bash
+kubectl create configmap todo-app-dashboard \
+  --from-file=todo-app-dashboard.json=monitoring/grafana-dashboard.json \
+  -n monitoring
+
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f monitoring/prometheus-values.yaml
+```
+
+デプロイを確認します。
+
+```bash
+kubectl get pods -n monitoring
+```
+
+Prometheus、Grafana、AlertmanagerのすべてのPodが `Running` になるまで待ちます。
+Grafanaにアクセスして、EKSクラスターのメトリクスが収集されていることを確認します。
+
+```bash
+kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
+```
+
+ブラウザで `http://localhost:3000` を開きます。
+minikubeとEKSで同じHelmチャートと `values.yaml` を使っているため、監視スタックの再構築はコマンド1つで完了します。環境差分はvaluesファイルのオーバーライドで吸収できます。
+
+これでローカル（minikube）で動作していたアプリケーションとGitOps環境、そして監視環境が完全にAmazon EKSへ移行されました。
+
+---
+
+## 9. クリーンアップ
+
+EKSクラスターは使用していない間も課金が発生します。ハンズオンが完了したら、必ずクラスターを削除してください。
+ALBやEBSボリュームは、対応するKubernetesリソースを削除することで自動的に削除されます。
+
+```bash
+# 1. Gateway（ALB）を削除
+kubectl delete gateway todo-gateway -n todo-app
+
+# 2. アプリケーションリソースを削除
+# 今回はArgoCD経由でデプロイしているため、ArgoCDのApplicationを削除してcascadeします
+argocd app delete todo-app --cascade
+# （手動デプロイの場合は kubectl delete -k manifests/ ）
+
+# 3. ArgoCDを削除
+kubectl delete namespace argocd
+
+# 4. 監視スタックを削除
+helm uninstall monitoring -n monitoring
+kubectl delete namespace monitoring
+
+# 5. AWS LBCを削除
+helm uninstall aws-load-balancer-controller -n kube-system
+
+# 6. クラスターの削除
+eksctl delete cluster -f eks/cluster-config.yaml --wait
+```
+
+削除には15〜25分かかります。VPC、サブネット、セキュリティグループを含むすべてのリソースが削除されます。
+
+> [!WARNING]
+> IAMアクセスキーはクラスター削除後に削除してください。
+> クラスター削除前にキーを削除すると、`eksctl` や `kubectl` が使えなくなります。正しい順序は次の通りです。
+> 1. `eksctl delete cluster` でクラスターを削除
+> 2. AWSコンソールで残存リソース（EC2のALBやEBSボリューム）がないかを確認
+> 3. IAMコンソールでアクセスキーを削除
